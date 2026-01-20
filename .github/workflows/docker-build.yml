@@ -10,7 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE: ${{ github.repository }}
+  GITH_IMAGE: ${{ github.repository }}
+  DOCKER_IMAGE: ${{ secrets.DOCKER_IMAGE }}
 
 jobs:
   build:
@@ -49,7 +50,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -63,8 +64,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ env.IMAGE }}
-            docker.io/${{ env.IMAGE }}
+            ghcr.io/${{ env.GITH_IMAGE }}
+            docker.io/${{ env.DOCKER_IMAGE }}
           tags: |
             type=sha,format=short,suffix=-${{ matrix.arch }}
             type=raw,value=v${{ steps.version.outputs.version }}-${{ matrix.arch }}
@@ -80,8 +81,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ env.IMAGE }}-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ env.IMAGE }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ env.GITH_IMAGE }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ env.GITH_IMAGE }}-${{ matrix.arch }}
 
       - name: Export digest
         run: |
@@ -133,7 +134,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -147,8 +148,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ env.IMAGE }}
-            docker.io/${{ env.IMAGE }}
+            ghcr.io/${{ env.GITH_IMAGE }}
+            docker.io/${{ env.DOCKER_IMAGE }}
           tags: |
             type=sha,format=short
             type=raw,value=latest
@@ -160,20 +161,62 @@ jobs:
           set -euo pipefail
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ env.IMAGE }}@sha256:%s ' *) \
-            $(printf 'docker.io/${{ env.IMAGE }}@sha256:%s ' *)
+            $(printf 'ghcr.io/${{ env.GITH_IMAGE }}@sha256:%s ' *) \
+            $(printf 'docker.io/${{ env.DOCKER_IMAGE }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/${{ env.IMAGE }}:latest
+          docker buildx imagetools inspect ghcr.io/${{ env.GITH_IMAGE }}:latest
 
-      - name: Redeploy Service
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: appleboy/ssh-action@v1
+      - name: Update Docker Repository Description
+        uses: peter-evans/dockerhub-description@v4.0.0
         with:
-          key: ${{ secrets.SSH_KEY }}
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          script: |
-            cd docker
-            ./manage_stack.sh up reactive_resume
+          repository: ${{ env.DOCKER_IMAGE }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          readme-filepath: ./README.md
+          short-description: "Reactive Resume is a modern, open-source resume builder that helps you create beautiful resumes with ease."
+
+      - name: Inform about the release on Admin Discord
+        uses: sarisia/actions-status-discord@v1.14.3
+        if: always()
+        with:
+          username: Reactive Resume Release Bot
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "Release `${{ steps.meta.outputs.version }}`"
+          description: "A new version of Reactive Resume just dropped! 🚀"
+          url: "https://github.com/lazy-media/Reactive-Resume"
+
+      - name: Inform about the release on Public Discord
+        uses: sarisia/actions-status-discord@v1.14.3
+        if: success()
+        with:
+          username: Reactive Resume Release Bot
+          webhook: ${{ secrets.DISCORD_PUBLIC_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "Release `${{ steps.meta.outputs.version }}`"
+          description: "A new version of Reactive Resume just dropped! 🚀"
+          url: "https://github.com/lazy-media/Reactive-Resume"
+
+      - name: Inform about the release on Gaming Discord
+        uses: sarisia/actions-status-discord@v1.14.3
+        if: success()
+        with:
+          username: Reactive Resume Release Bot
+          webhook: ${{ secrets.DISCORD_GAMING_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "Release `${{ steps.meta.outputs.version }}`"
+          description: "A new version of Reactive Resume just dropped! 🚀"
+          url: "https://github.com/lazy-media/Reactive-Resume"
+
+      - name: Inform about the release on Reactive Resume Public Discord
+        uses: sarisia/actions-status-discord@v1.14.3
+        if: success()
+        with:
+          username: Reactive Resume Release Bot
+          webhook: ${{ secrets.DISCORD_REACTIVE_RESUME_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "Release `${{ steps.meta.outputs.version }}`"
+          description: "A new version of Reactive Resume just dropped! 🚀"
+          url: "https://github.com/lazy-media/Reactive-Resume"
