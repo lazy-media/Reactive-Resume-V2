@@ -1,0 +1,371 @@
+---
+title: "Development Setup"
+description: "Set up a local development environment for Reactive Resume"
+---
+
+<Info>
+  **Prerequisites**:
+  - [Node.js](https://nodejs.org/) v20 or higher
+  - [pnpm](https://pnpm.io/) v10.28.0 or higher (package manager)
+  - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+  - [Git](https://git-scm.com/)
+</Info>
+
+This guide walks you through setting up Reactive Resume for local development. Whether you're contributing to the project or customizing it for your needs, these steps will get you up and running.
+
+---
+
+## Setting Up Your Development Environment
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/lazy-media/reactive-resume.git
+    cd Reactive-Resume
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    This project uses [pnpm](https://pnpm.io/) as its package manager for its speed and efficiency.
+    
+    ```bash
+    # Install pnpm if you haven't already
+    npm install -g pnpm
+    
+    # Install project dependencies
+    pnpm install
+    ```
+  </Step>
+  
+  <Step title="Start Infrastructure Services">
+    Start the required services using the development-specific Docker Compose file:
+    
+    ```bash
+    docker compose -f compose.dev.yml up -d
+    ```
+    
+    This starts the following infrastructure services:
+    - **PostgreSQL** — Database (port 5432)
+    - **SeaweedFS** — S3-compatible storage (port 8333)
+    - **Gotenberg** — PDF generation service (port 4000)
+    - **Mailpit** — Email testing server (SMTP on port 1025, UI on port 8025)
+    
+    <Tip>
+      Use `compose.dev.yml` instead of `compose.yml` for local development. The development file only includes infrastructure services with ports exposed to your host machine, while the main `compose.yml` includes the full application stack intended for production deployments.
+    </Tip>
+    
+    <Tip>
+      Wait for all services to be healthy before proceeding. Check with `docker compose -f compose.dev.yml ps`.
+    </Tip>
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Create a `.env` file in the project root:
+    
+    ```bash
+    # Server
+    APP_URL=http://localhost:3000
+
+    # Database
+    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+
+    # Authentication
+    AUTH_SECRET=development-secret-change-in-production
+
+    # Storage (SeaweedFS)
+    S3_ACCESS_KEY_ID=seaweedfs
+    S3_SECRET_ACCESS_KEY=seaweedfs
+    S3_ENDPOINT=http://localhost:8333
+    S3_BUCKET=reactive-resume
+    S3_FORCE_PATH_STYLE=true
+
+    # PDF Printer (required for local development)
+    PRINTER_APP_URL=http://host.docker.internal:3000
+
+    # Email (Mailpit for local development)
+    SMTP_HOST=localhost
+    SMTP_PORT=1025
+    ```
+    
+    <Note>
+      **PDF Generation Note**: The `PRINTER_APP_URL` variable is required when running Reactive Resume outside of Docker while the Gotenberg PDF service is running inside Docker (which is the case when using `compose.dev.yml`). Gotenberg needs to reach your local app to render resumes for PDF generation. Since Docker containers cannot access `localhost` on your host machine directly, you must set `PRINTER_APP_URL` to `http://host.docker.internal:3000`. This special hostname allows Docker containers to communicate with services running on your host machine.
+    </Note>
+    
+    <Tip>
+      **Email Testing**: The development stack includes [Mailpit](https://mailpit.axllent.org/), an email testing tool. All emails sent by the application will be captured and viewable at [http://localhost:8025](http://localhost:8025). No emails will actually be sent to real addresses during development.
+    </Tip>
+  </Step>
+  
+  <Step title="Run Database Migrations">
+    Apply the database schema:
+    
+    ```bash
+    pnpm run db:migrate
+    ```
+  </Step>
+  
+  <Step title="Start the Development Server">
+    ```bash
+    pnpm run dev
+    ```
+    
+    Your local Reactive Resume instance will be available at [http://localhost:3000](http://localhost:3000).
+  </Step>
+</Steps>
+
+---
+
+## Available Scripts
+
+Here are the most commonly used scripts during development:
+
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `pnpm run dev` | Start the development server with hot reload |
+| `pnpm run build` | Build the application for production |
+| `pnpm run start` | Start the production server |
+| `pnpm run lint` | Run Biome linter and formatter |
+| `pnpm run typecheck` | Run TypeScript type checking |
+
+### Database
+
+| Command | Description |
+|---------|-------------|
+| `pnpm run db:generate` | Generate migration files from schema changes |
+| `pnpm run db:migrate` | Apply pending migrations |
+| `pnpm run db:push` | Push schema changes directly (dev only) |
+| `pnpm run db:pull` | Pull schema from existing database |
+| `pnpm run db:studio` | Open Drizzle Studio (database GUI) |
+
+### Internationalization
+
+| Command | Description |
+|---------|-------------|
+| `pnpm run lingui:extract` | Extract translatable strings from code |
+
+### Documentation
+
+| Command | Description |
+|---------|-------------|
+| `pnpm run docs` | Start the Mintlify docs development server |
+
+---
+
+## Understanding the Project Structure
+
+Understanding the project structure will help you navigate the codebase:
+
+```
+reactive-resume/
+├── src/
+│   ├── components/         # Reusable React components
+│   │   ├── ui/             # Base UI components (Button, Card, etc.)
+│   │   ├── resume/         # Resume-specific components
+│   │   └── ...
+│   ├── dialogs/            # Modal dialogs
+│   ├── hooks/              # Custom React hooks
+│   ├── integrations/       # Third-party integrations
+│   │   ├── auth/           # Better Auth integration
+│   │   ├── drizzle/        # Database schema & utilities
+│   │   └── orpc/           # API routes & services
+│   ├── routes/             # File-based routing (TanStack Router)
+│   │   ├── builder/        # Resume builder pages
+│   │   ├── dashboard/      # User dashboard
+│   │   ├── auth/           # Authentication pages
+│   │   └── ...
+│   ├── schema/             # Zod schemas for validation
+│   ├── utils/              # Utility functions
+│   └── styles/             # Global CSS styles
+├── public/                 # Static assets
+├── locales/                # Translation files (.po format)
+├── migrations/             # Database migrations
+├── docs/                   # Mintlify documentation
+└── data/                   # Local data (fonts, uploads)
+```
+
+---
+
+## Working with the Database
+
+### Viewing the Database
+
+Use Drizzle Studio to explore and manage your database:
+
+```bash
+pnpm run db:studio
+```
+
+This opens a web-based GUI at [https://local.drizzle.studio](https://local.drizzle.studio).
+
+### Making Schema Changes
+
+1. Edit the schema in `src/integrations/drizzle/schema.ts`
+2. Generate a migration:
+   ```bash
+   pnpm run db:generate
+   ```
+3. Apply the migration:
+   ```bash
+   pnpm run db:migrate
+   ```
+
+<Warning>
+  Always review generated migrations before applying them, especially when working with existing data.
+</Warning>
+
+---
+
+## Working with Translations
+
+Reactive Resume uses [Lingui](https://lingui.dev/) for internationalization.
+
+### Adding Translatable Text
+
+Use the `t` macro for strings or `<Trans>` component for JSX:
+
+```tsx
+import { t } from "@lingui/core/macro";
+import { Trans } from "@lingui/react/macro";
+
+// For plain strings
+const message = t`Hello, World!`;
+
+// For JSX content
+<Trans>Welcome to Reactive Resume</Trans>
+```
+
+### Extracting Translations
+
+After adding new translatable text, extract them to the locale files:
+
+```bash
+pnpm run lingui:extract
+```
+
+Translation files are located in the `locales/` directory in `.po` format.
+
+---
+
+## Code Quality
+
+### Linting & Formatting
+
+Uses [Biome](https://biomejs.dev/) for linting and formatting:
+
+```bash
+# Check and auto-fix issues
+pnpm run lint
+```
+
+### Type Checking
+
+Run TypeScript type checking:
+
+```bash
+pnpm run typecheck
+```
+
+<Tip>
+  Configure your IDE to use Biome for automatic formatting on save. For VS Code, install the [Biome extension](https://marketplace.visualstudio.com/items?itemName=biomejs.biome).
+</Tip>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 3000 is already in use">
+    Another process is using port 3000. Either stop that process or start the dev server on a different port:
+    
+    ```bash
+    PORT=3001 pnpm run dev
+    ```
+  </Accordion>
+  
+  <Accordion title="Database connection refused">
+    Ensure Docker containers are running:
+    
+    ```bash
+    docker compose -f compose.dev.yml ps
+    docker compose -f compose.dev.yml up -d
+    ```
+    
+    Check that PostgreSQL is healthy and accessible on port 5432.
+  </Accordion>
+  
+  <Accordion title="S3/Storage errors">
+    Verify SeaweedFS is running and the bucket exists:
+    
+    ```bash
+    docker compose -f compose.dev.yml logs seaweedfs
+    docker compose -f compose.dev.yml logs seaweedfs-create-bucket
+    ```
+    
+    If the bucket wasn't created, restart the bucket creation service:
+    
+    ```bash
+    docker compose -f compose.dev.yml restart seaweedfs-create-bucket
+    ```
+  </Accordion>
+  
+  <Accordion title="Type errors after pulling changes">
+    The route tree may need regeneration. Run the dev server which auto-generates routes:
+    
+    ```bash
+    pnpm run dev
+    ```
+    
+    Or run type checking to see specific errors:
+    
+    ```bash
+    pnpm run typecheck
+    ```
+  </Accordion>
+  
+  <Accordion title="Uploaded images not appearing in PDF exports">
+    When running in development mode (Docker services + app on host), images you upload to your resume may not appear in PDF exports. This is because the printer service runs inside Docker and cannot access URLs that resolve to `localhost` on your host machine.
+    
+    **Why this happens:**
+    
+    The app running on your host uploads images to SeaweedFS (S3 storage) using `localhost:8333`. When Gotenberg tries to fetch these images to render the PDF, it cannot resolve `localhost` the same way your host machine does — they're on different networks.
+    
+    **Solutions:**
+    
+    1. **Run the entire stack in Docker** (recommended for testing PDF exports):
+       
+       Use the production `compose.yml` instead of `compose.dev.yml` to run all services, including the app, on the same Docker network:
+       
+       ```bash
+       docker compose up -d
+       ```
+       
+       This ensures all services can communicate with each other seamlessly.
+    
+    2. **Use publicly accessible images**:
+       
+       If you need to test PDF exports while developing on the host, use images hosted on publicly accessible URLs (e.g., images already hosted online) instead of uploading local files. The printer service can fetch these without network issues.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Project Architecture"
+    icon="folder-open"
+    href="/contributing/architecture"
+  >
+    Deep dive into the project architecture and codebase structure.
+  </Card>
+  <Card
+    title="GitHub Repository"
+    icon="github"
+    href="https://github.com/lazy-media/reactive-resume"
+  >
+    View the source code and contribute to the project.
+  </Card>
+</CardGroup>

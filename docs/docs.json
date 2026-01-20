@@ -1,0 +1,128 @@
+{
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "mint",
+	"name": "Reactive Resume",
+	"favicon": "/favicon.svg",
+	"description": "A one-of-a-kind resume builder that keeps your privacy in mind. Completely secure, customizable, portable, open-source and free forever. Try it out today!",
+	"seo": {
+		"indexing": "all",
+		"metatags": {
+			"canonical": "https://docs.rxresume.org"
+		}
+	},
+	"fonts": {
+		"heading": {
+			"family": "IBM Plex Sans"
+		},
+		"body": {
+			"family": "IBM Plex Sans"
+		}
+	},
+	"colors": {
+		"primary": "#166534",
+		"light": "#07C983",
+		"dark": "#15803D"
+	},
+	"navigation": {
+		"tabs": [
+			{
+				"tab": "Documentation",
+				"groups": [
+					{
+						"group": "Getting Started",
+						"pages": [
+							"getting-started/index",
+							"getting-started/quickstart",
+							"guides/accessing-the-previous-version",
+							"getting-started/changelog"
+						]
+					},
+					{
+						"group": "Account",
+						"pages": [
+							"guides/creating-an-account",
+							"guides/updating-your-profile",
+							"guides/linking-social-accounts",
+							"guides/deleting-your-account"
+						]
+					},
+					{
+						"group": "Resume Builder",
+						"pages": [
+							"guides/creating-your-first-resume",
+							"guides/choosing-a-template",
+							"guides/exporting-your-resume",
+							"guides/sharing-your-resume-publicly",
+							"guides/using-private-notes",
+							"guides/using-custom-css"
+						]
+					},
+					{
+						"group": "Security",
+						"pages": ["guides/setting-up-two-factor-authentication", "guides/setting-up-passkeys"]
+					},
+					{
+						"group": "Integrations",
+						"pages": ["guides/using-the-api", "guides/using-ai", "guides/json-resume-schema"]
+					},
+					{
+						"group": "Self-hosting",
+						"pages": ["guides/self-hosting-with-docker"]
+					},
+					{
+						"group": "Contributing",
+						"pages": ["contributing/architecture", "contributing/development", "contributing/translations"]
+					},
+					{
+						"group": "Legal",
+						"pages": ["legal/license", "legal/privacy-policy", "legal/terms-of-service"]
+					}
+				]
+			},
+			{
+				"tab": "API Reference",
+				"openapi": "/spec.json"
+			}
+		],
+		"global": {
+			"anchors": [
+				{
+					"icon": "link",
+					"anchor": "Reactive Resume",
+					"href": "https://rxresume.org"
+				},
+				{
+					"icon": "github",
+					"anchor": "Source Code",
+					"href": "https://github.com/lazy-media/reactive-resume"
+				}
+			]
+		}
+	},
+	"logo": {
+		"light": "/logo/light.svg",
+		"dark": "/logo/dark.svg"
+	},
+	"navbar": {
+		"links": [
+			{
+				"label": "Support",
+				"href": "https://github.com/lazy-media/reactive-resume/issues"
+			}
+		],
+		"primary": {
+			"type": "button",
+			"label": "Get Started",
+			"href": "https://rxresume.org"
+		}
+	},
+	"contextual": {
+		"options": ["copy", "view"]
+	},
+	"footer": {
+		"socials": {
+			"website": "https://rxresume.org",
+			"github": "https://github.com/lazy-media/reactive-resume"
+		}
+	}
+}

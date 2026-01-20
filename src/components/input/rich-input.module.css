@@ -1,0 +1,125 @@
+.tiptap_content {
+	--list-margin: 0.25rem;
+	--table-border-color: var(--page-text-color);
+
+	:where(p) {
+		margin-top: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	:where(p):first-child {
+		margin-top: 0;
+	}
+
+	:where(p):last-child {
+		margin-bottom: 0;
+	}
+
+	:where(ul, ol) {
+		margin-top: var(--list-margin);
+		margin-bottom: var(--list-margin);
+		list-style-position: inside;
+	}
+
+	:where(ul) {
+		list-style-type: disc;
+	}
+
+	:where(ol) {
+		list-style-type: decimal;
+	}
+
+	:where(li) {
+		margin-top: var(--list-margin);
+		margin-bottom: var(--list-margin);
+	}
+
+	:where(li p) {
+		display: inline;
+	}
+
+	:where(li ul li, li ol li) {
+		margin: var(--list-margin) 1rem;
+	}
+
+	:where(mark) {
+		color: var(--page-background-color);
+		background-color: var(--page-primary-color);
+	}
+
+	:where(table) {
+		width: 100%;
+
+		border-top: 1px solid var(--table-border-color);
+		border-left: 1px solid var(--table-border-color);
+	}
+
+	:where(th) {
+		font-weight: inherit;
+		text-align: left;
+	}
+
+	:where(th, td) {
+		padding: 0.5rem;
+		border-right: 1px solid var(--table-border-color);
+		border-bottom: 1px solid var(--table-border-color);
+	}
+}
+
+.editor_content {
+	font-family: var(--page-body-font-family);
+	font-size: calc(var(--page-body-font-size) * 1pt);
+	font-weight: var(--page-body-font-weight);
+	line-height: var(--page-body-line-height);
+	color: var(--page-text-color);
+
+	[class*="dark"] & {
+		--table-border-color: var(--color-foreground);
+		color: var(--color-foreground);
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--page-heading-font-family);
+		font-weight: var(--page-heading-font-weight);
+		line-height: var(--page-heading-line-height);
+	}
+
+	h1 {
+		font-size: calc(var(--page-heading-font-size) * 1.5pt);
+	}
+
+	h2 {
+		font-size: calc(var(--page-heading-font-size) * 1.25pt);
+	}
+
+	h3 {
+		font-size: calc(var(--page-heading-font-size) * 1.125pt);
+	}
+
+	h4 {
+		font-size: calc(var(--page-heading-font-size) * 1pt);
+	}
+
+	h5 {
+		font-size: calc(var(--page-heading-font-size) * 0.875pt);
+	}
+
+	h6 {
+		font-size: calc(var(--page-heading-font-size) * 0.75pt);
+	}
+
+	strong {
+		font-weight: var(--page-body-font-weight-bold);
+	}
+
+	a {
+		font-weight: var(--page-body-font-weight-bold);
+		text-decoration: underline;
+		text-underline-offset: 0.15rem;
+	}
+}

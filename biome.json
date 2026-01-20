@@ -1,0 +1,63 @@
+{
+	"$schema": "node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true,
+		"defaultBranch": "main"
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["**", "!**/webfontlist.json", "!**/docs/spec.json", "!**/src/routeTree.gen.ts"]
+	},
+	"formatter": {
+		"lineWidth": 120,
+		"indentStyle": "tab"
+	},
+	"assist": {
+		"actions": {
+			"recommended": true,
+			"source": {
+				"organizeImports": "on",
+				"useSortedProperties": "on"
+			}
+		}
+	},
+	"linter": {
+		"rules": {
+			"a11y": "off",
+			"recommended": true,
+			"suspicious": {
+				"noArrayIndexKey": "off"
+			},
+			"correctness": {
+				"noUnknownTypeSelector": "off",
+				"noUnusedImports": {
+					"fix": "safe",
+					"level": "error",
+					"options": {}
+				}
+			},
+			"nursery": {
+				"useSortedClasses": {
+					"fix": "safe",
+					"level": "warn",
+					"options": {
+						"functions": ["cn", "cva"],
+						"attributes": ["class", "className"]
+					}
+				}
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double"
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	}
+}

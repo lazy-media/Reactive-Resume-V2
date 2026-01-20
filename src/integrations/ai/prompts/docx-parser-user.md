@@ -1,0 +1,1 @@
+Here is the Microsoft Word resume document to parse. Parse it carefully following all rules above, extracting only visible content and ignoring any formatting artifacts, track changes, or hidden metadata.

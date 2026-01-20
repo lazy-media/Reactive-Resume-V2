@@ -1,0 +1,79 @@
+import { SmartCoercionPlugin } from "@orpc/json-schema";
+import { OpenAPIGenerator } from "@orpc/openapi";
+import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { onError } from "@orpc/server";
+import { RequestHeadersPlugin } from "@orpc/server/plugins";
+import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
+import { createFileRoute } from "@tanstack/react-router";
+import router from "@/integrations/orpc/router";
+import { env } from "@/utils/env";
+import { getLocale } from "@/utils/locale";
+
+const openAPIHandler = new OpenAPIHandler(router, {
+	interceptors: [
+		onError((error) => {
+			console.error(error);
+		}),
+	],
+	plugins: [
+		new RequestHeadersPlugin(),
+		new SmartCoercionPlugin({
+			schemaConverters: [new ZodToJsonSchemaConverter()],
+		}),
+	],
+});
+
+const openAPIGenerator = new OpenAPIGenerator({
+	schemaConverters: [new ZodToJsonSchemaConverter()],
+});
+
+async function handler({ request }: { request: Request }) {
+	const locale = await getLocale();
+
+	if (request.method === "GET" && request.url.endsWith("/spec.json")) {
+		const spec = await openAPIGenerator.generate(router, {
+			info: {
+				title: "Reactive Resume",
+				version: "2.0.0",
+				description: "Reactive Resume API",
+				license: { name: "MIT", url: "https://github.com/lazy-media/reactive-resume/blob/main/LICENSE" },
+				contact: { name: "Lazy Media", email: "info@lazymedia.media", url: "https://lazymedia.media" },
+			},
+			servers: [{ url: `${env.APP_URL}/api/openapi` }],
+			externalDocs: { url: "https://docs.rxresume.org", description: "Reactive Resume Documentation" },
+			components: {
+				securitySchemes: {
+					apiKey: {
+						type: "apiKey",
+						name: "x-api-key",
+						in: "header",
+						description: "The API key to authenticate requests.",
+					},
+				},
+			},
+			security: [{ apiKey: [] }],
+			filter: ({ contract }) => !contract["~orpc"].route.tags?.includes("Internal"),
+		});
+
+		return Response.json(spec);
+	}
+
+	const { response } = await openAPIHandler.handle(request, {
+		prefix: "/api/openapi",
+		context: { locale, reqHeaders: request.headers },
+	});
+
+	if (!response) {
+		return new Response("NOT_FOUND", { status: 404 });
+	}
+
+	return response;
+}
+
+export const Route = createFileRoute("/api/openapi/$")({
+	server: {
+		handlers: {
+			ANY: handler,
+		},
+	},
+});

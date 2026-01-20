@@ -1,0 +1,69 @@
+.page {
+	width: var(--page-width);
+	min-height: var(--page-height);
+	font-family: var(--page-body-font-family);
+	font-size: calc(var(--page-body-font-size) * 1pt);
+	font-weight: var(--page-body-font-weight);
+	line-height: var(--page-body-line-height);
+	color: var(--page-text-color);
+	background-color: var(--page-background-color);
+
+	&:not(:first-child) {
+		content-visibility: auto;
+		contain-intrinsic-size: var(--page-width) var(--page-height);
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--page-heading-font-family);
+		font-weight: var(--page-heading-font-weight);
+		line-height: var(--page-heading-line-height);
+	}
+
+	h1 {
+		font-size: calc(var(--page-heading-font-size) * 1.5pt);
+	}
+
+	h2 {
+		font-size: calc(var(--page-heading-font-size) * 1.25pt);
+	}
+
+	h3 {
+		font-size: calc(var(--page-heading-font-size) * 1.125pt);
+	}
+
+	h4 {
+		font-size: calc(var(--page-heading-font-size) * 1pt);
+	}
+
+	h5 {
+		font-size: calc(var(--page-heading-font-size) * 0.875pt);
+	}
+
+	h6 {
+		font-size: calc(var(--page-heading-font-size) * 0.75pt);
+	}
+
+	a {
+		text-decoration: underline;
+		text-underline-offset: 0.15rem;
+	}
+
+	@media print {
+		a {
+			text-decoration: none;
+		}
+	}
+
+	strong {
+		font-weight: var(--page-body-font-weight-bold);
+	}
+
+	small {
+		font-size: calc(var(--page-body-font-size) * 0.9pt);
+	}
+}

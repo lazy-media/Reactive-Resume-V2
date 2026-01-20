@@ -1,0 +1,227 @@
+---
+title: "Quickstart"
+description: "Get started with Reactive Resume in minutes — use our hosted version or deploy your own instance"
+---
+
+## Options
+
+Reactive Resume offers flexibility in how you want to use it. Choose the option that best fits your needs:
+
+<CardGroup cols={2}>
+  <Card title="Use the Cloud Version" icon="cloud" href="#use-the-cloud-version">
+    The fastest way to get started. **Recommended for most users.**
+  </Card>
+  <Card title="Self-Host with Docker" icon="docker" href="#self-host-with-docker">
+    Deploy your own instance with complete control. **Requires some technical knowledge.**
+  </Card>
+</CardGroup>
+
+---
+
+## Using the Cloud Version
+
+The easiest way to use Reactive Resume is through our cloud version at [rxresume.org](https://rxresume.org). **This service is completely free and will always remain free.**
+
+<Steps>
+  <Step title="Create an Account">
+    Visit [rxresume.org](https://rxresume.org) and sign up for free using your email, or sign in with your GitHub or Google account.
+  </Step>
+  
+  <Step title="Create Your First Resume">
+    Click the **Create Resume** button on your dashboard. Give your resume a name and select a template to get started.
+  </Step>
+  
+  <Step title="Fill in Your Details">
+    Use our intuitive builder to add your:
+    - Personal information
+    - Work experience
+    - Education
+    - Skills
+    - Projects
+    - And more...
+  </Step>
+  
+  <Step title="Export & Share">
+    When you're ready, export your resume as a PDF or share it via a unique public link.
+  </Step>
+</Steps>
+
+<Tip>
+  Your resume updates in real-time as you type. The preview panel shows exactly how your final PDF will look.
+</Tip>
+
+---
+
+## Self-Host with Docker
+
+For users who prefer complete control over their data, you can deploy Reactive Resume on your own infrastructure using Docker.
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- [Docker](https://docs.docker.com/get-docker/) (v20.10 or higher)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2.0 or higher)
+
+<Info>
+  There is <strong>no difference in features</strong> between the cloud-hosted version and the self-hosted option. Both provide the same privacy, customization, and functionality. Choose whichever deployment type suits your needs!
+</Info>
+
+
+### Quick Deployment
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/lazy-media/reactive-resume.git
+    cd Reactive-Resume
+    ```
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    Create a `.env` file in the root directory with the following variables:
+    
+    ```bash
+    # Application
+    APP_URL=http://localhost:3000
+    
+    # Database
+    DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+    
+    # Authentication (generate a secure secret)
+    AUTH_SECRET=your-secure-secret-key-here
+    
+    # Storage (S3-compatible)
+    S3_ACCESS_KEY_ID=seaweedfs
+    S3_SECRET_ACCESS_KEY=seaweedfs
+    S3_ENDPOINT=http://seaweedfs:8333
+    S3_BUCKET=reactive-resume
+    S3_FORCE_PATH_STYLE=true
+    ```
+    
+    <Warning>
+      For production deployments, always use strong, unique values for `AUTH_SECRET` and database credentials.
+    </Warning>
+  </Step>
+  
+  <Step title="Start the Services">
+    ```bash
+    docker compose up -d
+    ```
+    
+    This will start:
+    - **PostgreSQL** — Database for storing user data and resumes
+    - **SeaweedFS** — S3-compatible storage for file uploads
+    - **Gotenberg** — PDF generation service
+    - **Reactive Resume** — The main application
+  </Step>
+  
+  <Step title="Access Your Instance">
+    Once all services are running, access your Reactive Resume instance at:
+    
+    ```
+    http://localhost:3000
+    ```
+  </Step>
+</Steps>
+
+### Docker Compose Services
+
+Here's what each service in the stack does:
+
+| Service | Port | Description |
+|---------|------|-------------|
+| `postgres` | 5432 | PostgreSQL database for storing all application data |
+| `seaweedfs` | 8333 | S3-compatible object storage for file uploads |
+| `gotenberg` | 4000 | Headless Chrome service for PDF generation |
+| `app` | 3000 | The main Reactive Resume application |
+
+### Health Checks
+
+All services include built-in health checks. You can verify everything is running correctly:
+
+```bash
+docker compose ps
+```
+
+You should see all services with a `healthy` status.
+
+---
+
+## Environment Variables Reference
+
+Here's a complete list of environment variables you can configure:
+
+### Required Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
+| `AUTH_SECRET` | Secret key for authentication | Generate with `openssl rand -base64 32` |
+| `APP_URL` | Public URL of your Application | `https://rxresume.org` |
+| `GOTENBERG_ENDPOINT` | URL of the Gotenberg PDF service | `http://gotenberg:4000` |
+
+### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PRINTER_APP_URL` | Public URL for Gotenberg to access the Application | — |
+| `GOTENBERG_USERNAME` | Gotenberg Basic Auth Username (if enabled) | — |
+| `GOTENBERG_PASSWORD` | Gotenberg Basic Auth Password (if enabled) | — |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | — |
+| `GITHUB_CLIENT_ID` | GitHub OAuth Client ID | — |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth Client Secret | — |
+| `OAUTH_PROVIDER_NAME` | Custom OAuth Provider Name | — |
+| `OAUTH_CLIENT_ID` | Custom OAuth Client ID | — |
+| `OAUTH_CLIENT_SECRET` | Custom OAuth Client Secret | — |
+| `OAUTH_DISCOVERY_URL` | OIDC Discovery URL (use this OR manual URLs below) | — |
+| `OAUTH_AUTHORIZATION_URL` | OAuth Authorization URL (manual config) | — |
+| `OAUTH_TOKEN_URL` | OAuth Token URL (manual config) | — |
+| `OAUTH_USER_INFO_URL` | OAuth User Info URL (manual config) | — |
+| `OAUTH_SCOPES` | OAuth Scopes (space-separated) | `openid profile email` |
+| `SMTP_HOST` | SMTP Server Host (for email features) | — |
+| `SMTP_PORT` | SMTP Server Port | `587` |
+| `SMTP_USER` | SMTP Username | — |
+| `SMTP_PASS` | SMTP Password | — |
+| `SMTP_FROM` | Default FROM address for emails | — |
+| `SMTP_SECURE` | Use secure SMTP connection (`true` or `false`) | `false` |
+| `S3_ACCESS_KEY_ID` | S3 Access Key | — |
+| `S3_SECRET_ACCESS_KEY` | S3 Secret Key | — |
+| `S3_REGION` | S3 Region | `us-east-1` |
+| `S3_ENDPOINT` | S3-compatible Endpoint URL | — |
+| `S3_BUCKET` | S3 Bucket Name | — |
+| `S3_FORCE_PATH_STYLE` | Use path-style URLs for S3 (set `true` for MinIO/SeaweedFS) | `false` |
+| `FLAG_DEBUG_PRINTER` | Used for debugging the printer route | `false` |
+| `FLAG_DISABLE_SIGNUP` | Disables new user signups | `false` |
+
+> **Note:** Some variables are only required for using related features (OAuth, SMTP, S3, etc.) and can be left unset if unused.
+
+<Note>
+  **Hybrid Setup Note**: The `PRINTER_APP_URL` variable is required when running Reactive Resume outside of Docker while the Gotenberg PDF service is running inside Docker. In this scenario, Gotenberg needs to reach your local app to render resumes for PDF generation. Since Docker containers cannot access `localhost` on your host machine directly, you must set `PRINTER_APP_URL` to `http://host.docker.internal:3000`. This special hostname allows Docker containers to communicate with services running on your host machine.
+</Note>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Development Setup"
+    icon="code"
+    href="/contributing/development"
+  >
+    Set up a development environment to contribute or customize Reactive Resume.
+  </Card>
+  <Card
+    title="Project Architecture"
+    icon="folder-open"
+    href="/contributing/architecture"
+  >
+    Learn about the project structure and architecture.
+  </Card>
+</CardGroup>
+
+<Note>
+  **Having trouble?** Check our [GitHub Issues](https://github.com/lazy-media/reactive-resume/issues) or reach out via [email](mailto:info@lazymedia.media).
+</Note>

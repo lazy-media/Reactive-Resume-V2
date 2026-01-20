@@ -1,0 +1,206 @@
+services:
+  postgres:
+    image: postgres:18
+    command: postgres -c config_file=/etc/postgresql.conf
+    networks:
+      - reactive_resume_network
+    volumes:
+      - reactive_resume_postgres_data:/var/lib/postgresql
+    environment:
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    configs:
+      - source: reactive_resume_postgres_config
+        target: /etc/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    networks:
+      - reactive_resume_network
+    environment:
+      - WEBHOOK_DISABLE=true
+      - CHROMIUM_AUTO_START=true
+      - API_ENABLE_BASIC_AUTH=true
+      - PROMETHEUS_DISABLE_COLLECT=true
+      - GOTENBERG_API_BASIC_AUTH_USERNAME=$GOTENBERG_USERNAME
+      - GOTENBERG_API_BASIC_AUTH_PASSWORD=$GOTENBERG_PASSWORD
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    command: server -s3 -filer -dir=/data -ip=0.0.0.0
+    networks:
+      - reactive_resume_network
+    volumes:
+      - reactive_resume_seaweedfs_data:/data
+    environment:
+      - AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8888"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  seaweedfs_create_bucket:
+    image: quay.io/minio/mc:latest
+    entrypoint: >
+      /bin/sh -c "
+        until mc alias set seaweedfs http://seaweedfs:8333 $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY; do
+          echo 'Waiting for SeaweedFS...';
+          sleep 2;
+        done;
+        mc mb seaweedfs/$S3_BUCKET --ignore-existing;
+      "
+    networks:
+      - reactive_resume_network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 120s
+
+  app:
+    image: ghcr.io/lazy-media/reactive-resume-test:latest
+    networks:
+      - traefik_network
+      - reactive_resume_network
+    volumes:
+      - reactive_resume_app_data:/app/data
+    environment:
+      - APP_URL=$APP_URL
+      - GOTENBERG_ENDPOINT=$GOTENBERG_ENDPOINT
+      - GOTENBERG_USERNAME=$GOTENBERG_USERNAME
+      - GOTENBERG_PASSWORD=$GOTENBERG_PASSWORD
+      - DATABASE_URL=$DATABASE_URL
+      - AUTH_SECRET=$AUTH_SECRET
+      - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+      - GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID
+      - GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET
+      - SMTP_HOST=$SMTP_HOST
+      - SMTP_PORT=$SMTP_PORT
+      - SMTP_USER=$SMTP_USER
+      - SMTP_PASS=$SMTP_PASS
+      - SMTP_FROM=$SMTP_FROM
+      - SMTP_SECURE=$SMTP_SECURE
+      - S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID
+      - S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY
+      - S3_REGION=$S3_REGION
+      - S3_ENDPOINT=$S3_ENDPOINT
+      - S3_BUCKET=$S3_BUCKET
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.app.rule=Host(`rxresume.org`)"
+        - "traefik.http.routers.app.entrypoints=websecure"
+        - "traefik.http.routers.app.tls=true"
+        - "traefik.http.services.app.loadbalancer.server.port=3000"
+
+configs:
+  reactive_resume_postgres_config:
+    name: reactive_resume_postgres_config
+    external: true
+
+networks:
+  traefik_network:
+    external: true
+  reactive_resume_network:
+    name: reactive_resume_network
+    driver: overlay
+    attachable: true
+
+volumes:
+  reactive_resume_postgres_data:
+    name: reactive_resume_postgres_data
+  reactive_resume_seaweedfs_data:
+    name: reactive_resume_seaweedfs_data
+  reactive_resume_app_data:
+    name: reactive_resume_app_data

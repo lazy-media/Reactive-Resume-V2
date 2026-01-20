@@ -1,0 +1,43 @@
+{
+	"[mdx]": {
+		"editor.defaultFormatter": "unifiedjs.vscode-mdx"
+	},
+	"biome.enabled": true,
+	"editor.codeActionsOnSave": {
+		"source.biome": "explicit",
+		"source.fixAll.biome": "explicit",
+		"source.organizeImports.biome": "explicit"
+	},
+	"editor.defaultFormatter": "biomejs.biome",
+	"eslint.enable": false,
+	"files.associations": {
+		"*.css": "tailwindcss"
+	},
+	"files.readonlyInclude": {
+		"locales/*.po": true,
+		"pnpm-lock.yaml": true,
+		"**/routeTree.gen.ts": true
+	},
+	"files.watcherExclude": {
+		"locales/*.po": true,
+		"pnpm-lock.yaml": true,
+		"**/routeTree.gen.ts": true
+	},
+	"i18n-ally.enabledParsers": ["po"],
+	"i18n-ally.localesPaths": ["locales"],
+	"i18n-ally.sourceLanguage": "en-US",
+	"prettier.enable": false,
+	"search.exclude": {
+		"locales/*.po": true,
+		"pnpm-lock.yaml": true,
+		"**/routeTree.gen.ts": true
+	},
+	"tailwindCSS.classFunctions": ["cn", "cva"],
+	"tailwindCSS.experimental.classRegex": [
+		["class:\\s*?[\"'`]([^\"'`]*).*?,"],
+		["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+		["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+	],
+	"tailwindCSS.experimental.configFile": "src/styles/globals.css",
+	"typescript.tsdk": "node_modules/typescript/lib"
+}
